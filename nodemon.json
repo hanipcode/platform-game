@@ -1,0 +1,5 @@
+{
+  "watch": ["**/*.go"],
+  "ext": "go",
+  "exec": "GOOS=js GOARCH=wasm go build -o ./public/main.wasm main.go"
+}
