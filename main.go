@@ -3,18 +3,18 @@
 package main
 
 import (
+	"encoding/json"
 	"syscall/js"
 )
-
-func add(this js.Value, p []js.Value) any {
-	result := p[0].Int() + p[1].Int()
-	return js.ValueOf(result)
-}
 
 func main() {
 	c := make(chan struct{}, 0)
 
-	js.Global().Set("add", js.FuncOf(add))
+	gameState := NewGameState(Dimension{Width: 320, Height: 120})
+	gameStateJson, _ := json.Marshal(gameState)
+	var gameStateMap map[string]interface{}
+	json.Unmarshal(gameStateJson, &gameStateMap)
+	js.Global().Set("GameState", js.ValueOf(gameStateMap))
 
 	<-c
 }

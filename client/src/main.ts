@@ -1,37 +1,50 @@
+import { Canvas } from "./canvas";
+import { Graphics, Style } from "./graphics";
+import { Rect } from "./shape";
 import "./style.css";
-import typescriptLogo from "./typescript.svg";
-import viteLogo from "/vite.svg";
-import { setupCounter } from "./counter";
+import { BrowserViewport } from "./viewport";
 
 const go = new Go(); // Initialize Go WebAssembly object
 
-async function initWasm() {
+const flatten = <T>(arr: T[][]) => {
+  const res: T[] = [];
+  arr.forEach((row) => {
+    row.forEach((col) => {
+      res.push(col);
+    });
+  });
+
+  return res;
+};
+
+async function start() {
   const result = await WebAssembly.instantiateStreaming(
     fetch("/main.wasm"),
     go.importObject,
   );
   go.run(result.instance);
-  console.log("test run function from golang", add(1, 2));
+
+  const browserViewport = new BrowserViewport();
+  const canvas = new Canvas("app", browserViewport);
+  const renderedTiles = flatten(GameState.Tilemap.Tiles);
+  const renderedGraphics = renderedTiles.map((tile) => {
+    const tileShape = new Rect(
+      tile.Position.X,
+      tile.Position.Y,
+      tile.Size.Width,
+      tile.Size.Height,
+    );
+    const style = new Style();
+    style.borderWidth = 2;
+    style.borderColor = "blue";
+    style.background = "white";
+
+    return new Graphics(tileShape, style);
+  });
+
+  renderedGraphics.forEach((g) => {
+    canvas.draw(g);
+  });
 }
 
-document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
-  <div>
-    <a href="https://vite.dev" target="_blank">
-      <img src="${viteLogo}" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://www.typescriptlang.org/" target="_blank">
-      <img src="${typescriptLogo}" class="logo vanilla" alt="TypeScript logo" />
-    </a>
-    <h1>Vite + TypeScript</h1>
-    <div class="card">
-      <button id="counter" type="button"></button>
-    </div>
-    <p class="read-the-docs">
-      Click on the Vite and TypeScript logos to learn more
-    </p>
-  </div>
-`;
-
-initWasm();
-
-setupCounter(document.querySelector<HTMLButtonElement>("#counter")!);
+start();
